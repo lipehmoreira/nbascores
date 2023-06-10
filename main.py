@@ -10,6 +10,8 @@ import os
 
 f = "{gameId}: {awayTeam} vs. {homeTeam} @ {gameTimeLTZ}"
 
+total_actions = []
+
 # This block show all games in the current date
 board = scoreboard.ScoreBoard()
 print("ScoreBoardDate: " + board.score_board_date)
@@ -25,10 +27,11 @@ while True:
     # Get the datasets
     box = boxscore.BoxScore(live_game_id)
 
-    # I've removed part of this section | i'll be implemented soon
+    # Get the play by play dataset for the game choosed
     pbp = playbyplay.PlayByPlay(live_game_id)
-    line = "{action_number}: {period}:{clock} {player_id} ({action_type})"
+    #Set the template for the pbp
     actions = pbp.get_dict()['game']['actions']  # plays are referred to in the live data as `actions`
+
     away = box.away_team.get_dict()
     home = box.home_team.get_dict()
     current_game = box.game.get_dict()
@@ -39,16 +42,26 @@ while True:
     away_name = away['teamName']
     away_score = away['score']
 
+    for action in actions:
+        player_name = ''
+        player = players.find_player_by_id(action['personId'])
+        if player is not None:
+            player_name = player['full_name']
+            total_actions.append({player_name, action['actionType']})
+
+    last_score = total_actions[-1]
+
     # Clear the console
     os.system('cls')
 
     # Prints the live result
     print(f'{home_name} Vs. {away_name} | {current_game["gameStatusText"]}')
     print(f'{home_score} - {away_score}')
-    #TODO Print the action (play by play)
-    
-    # Wait 1 sec then continue to exec
-    #time.sleep(1)
+    for play in last_score:
+        print(play)
+
+    #Wait 1 sec then continue to exec
+    time.sleep(1)
 
     # Check if the game is over
     if current_game['gameStatusText'] == 'Final':
